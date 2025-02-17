@@ -1,0 +1,228 @@
+import requests
+import json
+from datetime import datetime, timezone
+from elasticsearch import Elasticsearch, helpers
+from tqdm import tqdm
+from dateutil import parser
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Tên index
+index_name = "ucall_business_v3_test"
+
+
+def create_index():
+    # Kết nối với Elasticsearch
+    es = Elasticsearch(hosts=["https://localhost:9200/"],
+                       http_auth=("elastic", "VwspHz*XVzod+GJ*YOA4"), verify_certs=False)
+
+    # Kiểm tra kết nối Elasticsearch
+    if not es.ping():
+        print("Không thể kết nối tới Elasticsearch!")
+        exit(1)
+    else:
+        print("Kết nối đến Elasticsearch thành công!")
+
+    # Kiểm tra và tạo index với mapping nếu chưa tồn tại
+    try:
+        if not es.indices.exists(index=index_name):
+            mapping = {
+                "mappings": {
+                    "properties": {
+                        "company_tax_id": {"type": "keyword"},
+                        "company_name": {"type": "text"},
+                        "company_type": {
+                            "properties": {
+                                "code": {"type": "integer"},
+                                "name": {"type": "keyword"}
+                            }
+                        },
+                        "company_status": {"type": "boolean"},
+                        "company_start_date": {"type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"},
+                        "company_contact_name": {"type": "text"},
+                        "company_phone": {"type": "keyword"},
+                        "company_location": {"type": "text"},
+                        "company_province": {
+                            "properties": {
+                                "name": {"type": "keyword"},
+                                "code": {"type": "keyword"}
+                            }
+                        },
+                        "company_district": {
+                            "properties": {
+                                "name": {"type": "keyword"},
+                                "code": {"type": "keyword"}
+                            }
+                        },
+                        "company_industries": {"type": "keyword"}
+                    }
+                }
+            }
+            es.indices.create(index=index_name, body=mapping)
+            print(f"Đã tạo index '{index_name}' với mapping thành công.")
+        else:
+            print(f"Index '{index_name}' đã tồn tại.")
+    except Exception as e:
+        print(f"Lỗi khi kiểm tra hoặc tạo index: {e}")
+        exit(1)
+
+# Quét và upload dữ liệu lên Elasticsearch
+
+
+def get_token():
+    url = "https://authentication.batdongsan.com.vn/Connect/Token"
+    payload = {
+        'client_id': '03d0f905-10c9-4d21-90f5-10b78e0a989c',
+        'client_secret': 'EA7B333ACA314576828D746F8C6BF733A6DBE4D5B8E34518BE891C937463D42F',
+        'grant_type': 'client_credentials',
+        'scope': 'ApiGateway'
+    }
+    headers = {
+        'Host': 'authentication.batdongsan.com.vn',
+        'Accept': '*/*',
+        'Versionnumber': '1',
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'Batdongsan/51 CFNetwork/1474 Darwin/23.0.0',
+        'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate',
+    }
+    response = requests.post(url, headers=headers, data=payload)
+    token = response.json().get("access_token")
+    return token
+
+
+def normalize_datetime(raw_datetime):
+    """
+    Chuyển đổi giá trị datetime về định dạng chuẩn Elasticsearch: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+    """
+    try:
+        # Xử lý trường hợp có "Z" (UTC)
+        # if raw_datetime.endswith("Z"):
+        #     dt = datetime.fromisoformat(raw_datetime.replace("Z", "+00:00"))
+        # elif raw_datetime.endswith("+07:00"):
+        #     dt = datetime.fromisoformat(raw_datetime.replace("+07:00", ""))
+        # else:
+        #     dt = datetime.fromisoformat(raw_datetime)
+        dt = parser.parse(raw_datetime)
+        # Đưa về UTC
+        dt_utc = dt.astimezone(timezone.utc)
+
+        # Định dạng lại theo Elasticsearch format
+        normalized = dt_utc.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+        return normalized
+    except Exception as e:
+        print(f"Lỗi khi xử lý datetime: {e}")
+        return None
+
+
+def crawl_and_upload_to_elasticsearch(type_of_product):
+    es = Elasticsearch(hosts=["https://localhost:9200/"],
+                       http_auth=("elastic", "VwspHz*XVzod+GJ*YOA4"), verify_certs=False)
+    token = get_token()
+    url_data = "https://homebuyerapi.batdongsan.com.vn/api/Product/Search"
+    headers_data = {
+        'Host': 'homebuyerapi.batdongsan.com.vn',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Versionnumber': '1',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Content-Length': '226',
+        'User-Agent': 'Batdongsan/51 CFNetwork/1474 Darwin/23.0.0',
+        'Authorization': f'Bearer {token}',
+    }
+    payload_data = {
+        "PageSize": 50,
+        "CateId": -1,
+        "CityCode": "",
+        "StreetId": -1,
+        "DistrictId": -1,
+        "Direction": -1,
+        "AreaLevel": -1,
+        "PriceLevel": -1,
+        "Room": -1,
+        "ProjectId": -1,
+        "TextSearch": "",
+        "SortValue": 0,
+        "SearchTag": "",
+        "TypeOfProduct": type_of_product
+    }
+
+    unique_objects = []
+    total_pages = 1
+    progress_bar = tqdm(range(1, total_pages + 1),
+                        desc="Crawling data", unit="page", disable=True)
+
+    for i in progress_bar:
+        try:
+            payload_data['PageIndex'] = i
+            response_data = requests.post(
+                url_data, headers=headers_data, json=payload_data)
+            items = response_data.json()["Data"][0]['Items']
+
+            # Lọc trùng và chuẩn bị dữ liệu để upload lên Elasticsearch
+            for obj in items:
+                company_tax_id = obj["ProductId"]
+                company_data = {
+                    "company_tax_id": company_tax_id,
+                    "company_name": obj["ContactName"],
+                    "company_type": {
+                        "code": obj.get("CateId", -1),
+                        "name": obj.get("CateName", "")
+                    },
+                    "company_status": True,
+                    "company_contact_name": obj["ContactName"],
+                    "company_phone": obj["ContactMobile"],
+                    "company_location": obj.get("ProductUrl", ""),
+                    "company_province": {
+                        "name": obj.get("ProvinceName", ""),
+                        "code": obj.get("ProvinceCode", "")
+                    },
+                    "company_district": {
+                        "name": obj.get("DistrictName", ""),
+                        "code": obj.get("DistrictCode", "")
+                    },
+                    "company_industries": obj.get("Industries", [])
+                }
+
+                raw_date = obj.get('LastUpTime', '')
+                company_data["company_start_date"] = normalize_datetime(
+                    raw_date) if raw_date else None
+
+                # Thêm vào danh sách cho việc bulk upload
+                unique_objects.append({
+                    "_index": index_name,
+                    "_id": company_tax_id,
+                    "_source": company_data
+                })
+
+                # Upload từng document lên Elasticsearch
+                try:
+                    es.index(index=index_name, id=company_tax_id,
+                             body=company_data)
+                    print(
+                        f"Đã upload công ty với ID {company_tax_id} lên Elasticsearch.")
+                except Exception as e:
+                    print(
+                        f"Lỗi khi upload công ty với ID {company_tax_id} lên Elasticsearch: {e}")
+
+        except Exception as e:
+            print(f"Lỗi khi quét dữ liệu hoặc upload lên Elasticsearch: {e}")
+
+    # Đẩy các dữ liệu còn lại nếu có
+    if unique_objects:
+        for obj in unique_objects:
+            try:
+                es.index(index=obj["_index"],
+                         id=obj["_id"], body=obj["_source"])
+                print(
+                    f"Đã upload công ty với ID {obj['_id']} lên Elasticsearch.")
+            except Exception as e:
+                print(
+                    f"Lỗi khi upload công ty với ID {obj['_id']} lên Elasticsearch: {e}")
+
+
+# Gọi hàm để quét và upload dữ liệu
+crawl_and_upload_to_elasticsearch(49)
