@@ -1,7 +1,7 @@
 name: Notify Teams
-on: 
+on:
   pull_request:
-    types: [reopened]
+    types: [opened, closed, reopened]
 
 jobs:
   notify:
@@ -10,5 +10,5 @@ jobs:
       - name: Send Notification to Teams
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
-            "text": "**Pull Request Reopened**: [#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
+            "text": "**New PR Created**: [PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
           }' ${{ secrets.TEAMS_WEBHOOK_URL }}
