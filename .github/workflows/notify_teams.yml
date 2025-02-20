@@ -1,0 +1,14 @@
+name: Notify Teams
+on: 
+  pull_request:
+    types: [reopened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Notification to Teams
+        run: |
+          curl -H "Content-Type: application/json" -X POST -d '{
+            "text": "**Pull Request Reopened**: [#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
+          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
