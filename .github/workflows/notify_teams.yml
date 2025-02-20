@@ -4,8 +4,6 @@ on:
   pull_request:
     types: [opened,closed]  # Chỉ chạy khi PR được đóng (merged hoặc không)
 
-
-
 jobs:
   notify:
     runs-on: ubuntu-latest
@@ -19,12 +17,19 @@ jobs:
             echo "merged=false" >> $GITHUB_ENV
           fi
 
+      - name: Convert merge time to Vietnam Time (UTC+07:00)
+        if: env.merged == 'true'
+        run: |
+          export TZ=Asia/Ho_Chi_Minh
+          MERGE_TIME=$(date -d "${{ github.event.pull_request.merged_at }}" +"%Y-%m-%dT%H:%M:%S%:z")
+          echo "MERGE_TIME=$MERGE_TIME" >> $GITHUB_ENV
+
       - name: Send Notification to Microsoft Teams
-        if: env.merged == 'true'  # Chỉ gửi thông báo nếu PR được merged
+        if: env.merged == 'true'
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
             "text": "[**Merge pull request #${{ github.event.pull_request.number }} from ${{ github.event.pull_request.head.repo.full_name }}/${{ github.event.pull_request.head.ref }}**](${{ github.event.pull_request.html_url }})\n
             **Branch**: ${{ github.event.pull_request.base.ref }}\n
             **Author**: ${{ github.event.pull_request.user.login }}\n
-            **Time**: ${{ github.event.pull_request.merged_at }}"
+            **Time**: ${{ env.MERGE_TIME }}"
           }' ${{ secrets.TEAMS_WEBHOOK_URL }}
