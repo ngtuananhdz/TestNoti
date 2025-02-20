@@ -225,4 +225,11 @@ def crawl_and_upload_to_elasticsearch(type_of_product):
 
 
 # Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
+# Gọi hàm để quét và upload dữ liệu
 crawl_and_upload_to_elasticsearch(49)
