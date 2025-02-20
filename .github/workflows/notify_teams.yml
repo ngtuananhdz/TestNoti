@@ -5,6 +5,7 @@ on:
     types: [opened,closed]  # Chỉ chạy khi PR được đóng (merged hoặc không)
 
 
+
 jobs:
   notify:
     runs-on: ubuntu-latest
