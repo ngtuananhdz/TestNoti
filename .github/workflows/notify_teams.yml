@@ -22,7 +22,7 @@ jobs:
         if: env.merged == 'true'  # Chỉ gửi thông báo nếu PR được merged
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
-            "text": "**Merge pull request [#${{ github.event.pull_request.number }} from ${{ github.event.pull_request.head.repo.full_name }}/${{ github.event.pull_request.head.ref }}](${{ github.event.pull_request.html_url }})**\n
+            "text": "[**Merge pull request #${{ github.event.pull_request.number }} from ${{ github.event.pull_request.head.repo.full_name }}/${{ github.event.pull_request.head.ref }}](${{ github.event.pull_request.html_url }})**\n
             **Branch**: ${{ github.event.pull_request.base.ref }}\n
             **Author**: ${{ github.event.pull_request.user.login }}\n
             **Time**: ${{ github.event.pull_request.merged_at }}"
