@@ -1,14 +1,28 @@
-name: Notify Teams
+name: Notify Microsoft Teams on PR Merge
+
 on:
   pull_request:
-    types: [opened, closed, reopened]
+    types: [closed]  # Chỉ chạy khi PR được đóng (merged hoặc không)
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Notification to Teams
+      - name: Check if PR is merged
+        id: check_merge
+        run: |
+          if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+            echo "merged=true" >> $GITHUB_ENV
+          else
+            echo "merged=false" >> $GITHUB_ENV
+          fi
+
+      - name: Send Notification to Microsoft Teams
+        if: env.merged == 'true'  # Chỉ gửi thông báo nếu PR được merged
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
-            "text": "**New PR Created**: [PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
+            "text": "**Merge pull request #${{ github.event.pull_request.number }} from ${{ github.event.pull_request.head.repo.full_name }}/${{ github.event.pull_request.head.ref }}**\n
+            **Branch**: ${{ github.event.pull_request.base.ref }}\n
+            **Author**: ${{ github.event.pull_request.user.login }}\n
+            **Time**: ${{ github.event.pull_request.merged_at }}"
           }' ${{ secrets.TEAMS_WEBHOOK_URL }}
