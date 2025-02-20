@@ -2,7 +2,7 @@ name: Notify Microsoft Teams on PR Merge
 
 on:
   pull_request:
-    types: [closed]  # Chỉ chạy khi PR được đóng (merged hoặc không)
+    types: [opened,closed]  # Chỉ chạy khi PR được đóng (merged hoặc không)
 
 
 jobs:
