@@ -11,4 +11,4 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
             "text": "**New PR Created**: [PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
-          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
+          }' https://prod-56.southeastasia.logic.azure.com:443/workflows/76e8d7380faf4cda83f0113f929e020f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fyL_j1kzYWSz9-tAKxBnt60qAluxJKTBknSgO6fnL0A
