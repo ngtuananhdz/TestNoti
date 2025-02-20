@@ -11,4 +11,4 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
             "text": "**New PR Created**: [PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
-          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
+          }' https://teams.microsoft.com/l/channel/19%3A19yKN1akkLRaUuQN2dCUb3uO5HHawfYNozkm8eGagc81%40thread.tacv2/Test%20MS?groupId=7af3861b-f4fe-4e7f-8328-d7b85b3eb45f&tenantId=385be7f0-3291-4eed-8fa3-4d7b5ede7299
