@@ -9,5 +9,5 @@ jobs:
       - name: Send notification
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
-            "text": "**New Commit**: [Merge PR #4](https://your-github-enterprise.com/repo/pull/4)"
+            "text": "**New Commit**: [Merge PR #4](https://github.com/ngtuananhdz/TestNoti/repo/pull/4)"
           }' https://ucall113.webhook.office.com/webhookb2/7af3861b-f4fe-4e7f-8328-d7b85b3eb45f@385be7f0-3291-4eed-8fa3-4d7b5ede7299/GitHubEnterprise/fe472587f9ed4f90a13fa399d7239134/e76f2dcc-3a0c-4056-923b-17f5b4066d2d/V2MTc40suRgowfMb84ndGYc4iPFrmNgrp8uERBISG93Es1
