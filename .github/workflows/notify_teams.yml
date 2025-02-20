@@ -27,4 +27,4 @@ jobs:
             **Branch**: ${{ github.event.pull_request.base.ref }}\n
             **Author**: ${{ github.event.pull_request.user.login }}\n
             **Time**: ${{ github.event.pull_request.merged_at }}"
-          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
+          }' ${{ secrets.TEST_NOTI }}
