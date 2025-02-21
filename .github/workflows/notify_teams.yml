@@ -32,4 +32,4 @@ jobs:
             **Branch**: ${{ github.event.pull_request.base.ref }}\n
             **Author**: ${{ github.event.pull_request.user.login }}\n
             **Time**: ${{ env.MERGE_TIME }}"
-          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
+          }' ${{ secrets.TEAMS_WEBHOOK_URL_2 }}
