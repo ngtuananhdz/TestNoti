@@ -7,3 +7,5 @@ git push origin main
 on khong
 
 khong
+
+the nhu nao
