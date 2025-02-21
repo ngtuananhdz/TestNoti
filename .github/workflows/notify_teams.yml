@@ -28,7 +28,7 @@ jobs:
         if: env.status == 'opened'
         run: |
           curl -H "Content-Type: application/json" -X POST -d '{
-            "text": "[**New Pull Request #${{ github.event.pull_request.number }}**](${{ github.event.pull_request.html_url }})\n
+            "text": "[**New Pull Request #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})**\n
             **Title**: ${{ github.event.pull_request.title }}\n
             **Branch**: ${{ github.event.pull_request.base.ref }}\n
             **Created by**: ${{ github.event.pull_request.user.login }}\n
