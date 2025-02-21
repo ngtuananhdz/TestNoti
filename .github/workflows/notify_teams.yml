@@ -23,17 +23,6 @@ jobs:
           export TZ=Asia/Ho_Chi_Minh
           MERGE_TIME=$(date -d "${{ github.event.pull_request.merged_at }}" +"%Y-%m-%dT%H:%M:%S%:z")
           echo "MERGE_TIME=$MERGE_TIME" >> $GITHUB_ENV
-
-      - name: Send Notification to Microsoft Teams (Opened PR)
-        if: env.status == 'opened'
-        run: |
-          curl -H "Content-Type: application/json" -X POST -d '{
-            "text": "[**New Pull Request #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})**\n
-            **Title**: ${{ github.event.pull_request.title }}\n
-            **Branch**: ${{ github.event.pull_request.base.ref }}\n
-            **Created by**: ${{ github.event.pull_request.user.login }}\n
-            **Description**: ${{ github.event.pull_request.body }}"
-          }' ${{ secrets.TEAMS_WEBHOOK_URL }}
           
       - name: Send Notification to Microsoft Teams
         if: env.merged == 'true'
