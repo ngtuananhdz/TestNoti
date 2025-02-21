@@ -1,4 +1,4 @@
-name: Notify Microsoft Teams on PR Merge
+name: Notify Merge Pull Request to Microsoft Teams
 
 on:
   pull_request:
